@@ -24,7 +24,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card asChild>
+        <Card>
           <Link href="/dashboard/inventory" className="cursor-pointer">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function DashboardPage() {
           </Link>
         </Card>
 
-        <Card asChild>
+        <Card>
           <Link href="/dashboard/orders" className="cursor-pointer">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

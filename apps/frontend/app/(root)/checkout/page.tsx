@@ -89,7 +89,7 @@ export default function CheckoutPage() {
         items: items.map((item) => ({
           productId: item.id,
           quantity: item.cartQuantity,
-          // price is intentionally omitted; backend derives it from inventory
+          unitPrice: item.price,
         })),
         idempotencyKey,
       });

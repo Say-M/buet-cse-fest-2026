@@ -39,11 +39,17 @@ COPY packages ./packages
 COPY apps/frontend ./apps/frontend
 
 # Set environment variables for build
+ENV OUTPUT_TRACING_ROOT=/app
 # Add your build-time environment variables here
 # ENV NEXT_PUBLIC_API_URL=https://your-api.com
 
 # Build the Next.js application directly (not using turbo for Docker builds)
 WORKDIR /app/apps/frontend
+
+# Create symlink to node_modules at workspace root so Next.js can find dependencies
+RUN ln -s /app/node_modules ./node_modules
+
+# Build with bun
 RUN bun --bun next build
 
 # Production image, copy all the files and run next
