@@ -29,6 +29,9 @@ services:
       - order-service
       - inventory-service
       - auth-service
+      - notification-service
+      - payment-service
+      - analytics-service
       - otel-collector
     environment:
       - PORT=3000
@@ -36,6 +39,9 @@ services:
       - ORDER_SERVICE_URL=http://order-service:3001
       - INVENTORY_SERVICE_URL=http://inventory-service:3002
       - AUTH_SERVICE_URL=http://auth-service:9000
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3003
+      - PAYMENT_SERVICE_URL=http://payment-service:3004
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3005
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=gateway
     networks:
@@ -124,6 +130,70 @@ services:
       - OTEL_SERVICE_NAME=auth-service
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production
       - JWT_EXPIRES_IN=24h
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ============ MODULAR EXTENSION SERVICES ============
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/backend/notification-service/Dockerfile
+    ports:
+      - "3003:3003"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      - PORT=3003
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=notification-service
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: apps/backend/payment-service/Dockerfile
+    ports:
+      - "3004:3004"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      - PORT=3004
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=payment-service
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: apps/backend/analytics-service/Dockerfile
+    ports:
+      - "3005:3005"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      - PORT=3005
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=analytics-service
     networks:
       - app-network
     restart: unless-stopped

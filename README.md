@@ -1,6 +1,15 @@
-# Turborepo starter
+# E-Commerce Microservices Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+A robust, event-driven microservices architecture built with Bun, TypeScript, and RabbitMQ.
+
+## 🎯 Modular Architecture Demonstration
+
+This project demonstrates **true microservices modularity** by including three extension services that were added **without modifying any existing service code**:
+- 📧 **Notification Service** - Email/SMS notifications
+- 💳 **Payment Service** - Mock payment processing  
+- 📊 **Analytics Service** - Real-time metrics
+
+📖 **See [MODULAR_SERVICES.md](MODULAR_SERVICES.md) for details**
 
 ## Using this example
 

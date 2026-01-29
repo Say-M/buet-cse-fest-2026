@@ -222,6 +222,12 @@ app.get(
       process.env.INVENTORY_SERVICE_URL || "http://localhost:3002";
     const AUTH_SERVICE_URL =
       process.env.AUTH_SERVICE_URL || "http://localhost:9000";
+    const NOTIFICATION_SERVICE_URL =
+      process.env.NOTIFICATION_SERVICE_URL || "http://localhost:3003";
+    const PAYMENT_SERVICE_URL =
+      process.env.PAYMENT_SERVICE_URL || "http://localhost:3004";
+    const ANALYTICS_SERVICE_URL =
+      process.env.ANALYTICS_SERVICE_URL || "http://localhost:3005";
 
     const checkService = async (
       url: string,

@@ -56,6 +56,9 @@ export const EXCHANGES = {
 export const QUEUES = {
   INVENTORY_UPDATES: "inventory.updates",
   ORDER_EVENTS: "order.events",
+  NOTIFICATIONS: "notifications_queue",
+  PAYMENTS: "payments_queue",
+  ANALYTICS: "analytics_queue",
 } as const;
 
 export const ROUTING_KEYS = {
