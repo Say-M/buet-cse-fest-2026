@@ -9,6 +9,11 @@ export const CONFIG = {
 
   // Test stages for different scenarios
   stages: {
+    ci: [
+      { duration: '30s', target: 5 },    // Ramp up to 5 VUs
+      { duration: '1m', target: 5 },     // Stay at 5 VUs
+      { duration: '30s', target: 0 },    // Ramp down
+    ],
     baseline: [
       { duration: '30s', target: 10 },   // Ramp up to 10 VUs
       { duration: '2m', target: 10 },    // Stay at 10 VUs

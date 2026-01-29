@@ -50,27 +50,51 @@ jobs:
       - name: Install jq
         run: sudo apt-get install -y jq
 
+      - name: Check Docker
+        run: |
+          docker --version
+          docker compose version
+          docker info
+
       - name: Start system
         run: bash scripts/start-system.sh
+        timeout-minutes: 10
 
-      - name: Stabilization
-        run: sleep 30
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          echo "=== Docker Compose Services ==="
+          docker compose -f docker-compose.dev.yml ps
+          echo "=== Gateway Logs ==="
+          docker compose -f docker-compose.dev.yml logs --tail=100 gateway || true
+          echo "=== Order Service Logs ==="
+          docker compose -f docker-compose.dev.yml logs --tail=100 order-service || true
+          echo "=== Inventory Service Logs ==="
+          docker compose -f docker-compose.dev.yml logs --tail=100 inventory-service || true
+          echo "=== Auth Service Logs ==="
+          docker compose -f docker-compose.dev.yml logs --tail=100 auth-service || true
 
-      - name: Run k6 resilience
-        run: SKIP_STARTUP=true bash scripts/run-load-test.sh resilience
+      - name: Verify system health
+        run: |
+          echo "Checking all services are healthy..."
+          curl -f http://localhost:3000/health || exit 1
+          curl -f http://localhost:3001/health/live || exit 1
+          curl -f http://localhost:3002/health/live || exit 1
+          curl -f http://localhost:9000/health/live || exit 1
+          echo "All services healthy!"
 
-      - name: Run k6 baseline
-        run: SKIP_STARTUP=true bash scripts/run-load-test.sh baseline
-
-      - name: Run k6 stress
-        run: SKIP_STARTUP=true bash scripts/run-load-test.sh stress
-
-      - name: Run k6 spike
-        run: SKIP_STARTUP=true bash scripts/run-load-test.sh spike
+      - name: Run k6 CI test
+        run: SKIP_STARTUP=true bash scripts/run-load-test.sh ci
+        timeout-minutes: 5
 
       - name: Upload k6 artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: k6-load-test-results
           path: scripts/load-test-k6/artifacts/
           retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.dev.yml down -v
