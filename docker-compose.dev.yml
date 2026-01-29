@@ -43,9 +43,19 @@ services:
       - NODE_ENV=development
       - INVENTORY_SERVICE_URL=http://inventory-service:3002
       - MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/order_db?replicaSet=rs0
+      - MONGO_DB_NAME=order_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=order-service
+      # Backup Configuration (WAL-based incremental backup)
+      - BACKUP_ENABLED=true
+      - BACKUP_HOUR=2
+      - WAL_RETENTION_DAYS=7
+      - SNAPSHOT_RETENTION_DAYS=30
+      - BACKUP_USE_FILESYSTEM=true
+      - BACKUP_DIR=/app/backups
+    volumes:
+      - order_backups:/app/backups
     networks:
       - app-network
     restart: unless-stopped
@@ -281,3 +291,4 @@ volumes:
   prometheus_data:
   loki_data:
   grafana_data:
+  order_backups:
