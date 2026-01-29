@@ -181,8 +181,8 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
-    tmpfs:
-      - /var/lib/rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics check_running
       interval: 10s
@@ -288,6 +288,7 @@ volumes:
   mongo1_data:
   mongo2_data:
   mongo3_data:
+  rabbitmq_data:
   prometheus_data:
   loki_data:
   grafana_data:
