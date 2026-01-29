@@ -1,8 +1,95 @@
 # @format
 
-version: "3"
+version: "3.8"
 
 services:
+  # ============ FRONTEND ============
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:3000
+    ports:
+      - "5000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - gateway
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ============ API GATEWAY ============
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/backend/gateway/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - ORDER_SERVICE_URL=http://order-service:3001
+      - INVENTORY_SERVICE_URL=http://inventory-service:3002
+      - AUTH_SERVICE_URL=http://auth-service:9000
+    depends_on:
+      - order-service
+      - inventory-service
+      - auth-service
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ============ APPLICATION SERVICES ============
+  order-service:
+    build:
+      context: .
+      dockerfile: apps/backend/order-service/Dockerfile
+    env_file:
+      - ./apps/backend/order-service/.env.production
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - INVENTORY_SERVICE_URL=http://inventory-service:3002
+      - MONGODB_URI=mongodb://mongo:27017/order_db
+      - MONGO_DB_NAME=order_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "3001:3001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: apps/backend/inventory-service/Dockerfile
+    env_file:
+      - ./apps/backend/inventory-service/.env.production
+    environment:
+      - PORT=3002
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/inventory_db
+      - MONGO_DB_NAME=inventory_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - GREMLIN_ENABLED=false
+    ports:
+      - "3002:3002"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+
   auth-service:
     build:
       context: .
@@ -10,37 +97,80 @@ services:
     env_file:
       - ./apps/backend/auth-service/.env.production
     environment:
-      # Fallbacks if env_file is missing
-      MONGO_URI: mongodb://mongo:27017
-      MONGO_DB_NAME: auth_prod
-      NODE_ENV: production
+      - PORT=9000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/auth_db
+      - MONGO_DB_NAME=auth_db
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_EXPIRES_IN=24h
     ports:
       - "9000:9000"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+    networks:
+      - app-network
     restart: unless-stopped
 
+  # ============ DATABASES ============
   mongo:
-    image: mongo:8.2.3
+    image: mongo:7
     restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app-network
 
+  # ============ MESSAGE BROKER ============
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics check_running
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ============ OBSERVABILITY ============
   prom-server:
-    image: prom/prometheus
+    image: prom/prometheus:v2.50.1
     ports:
       - "9090:9090"
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
     depends_on:
-      - auth-service
+      - gateway
+    networks:
+      - app-network
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana-oss
+    image: grafana/grafana:10.3.3
     ports:
       - "3030:3000"
     environment:
@@ -51,8 +181,16 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prom-server
+    networks:
+      - app-network
     restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   mongo_data:
+  rabbitmq_data:
+  prometheus_data:
   grafana_data:
