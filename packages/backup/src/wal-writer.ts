@@ -1,5 +1,3 @@
-/** @format */
-
 import mongoose, { ChangeStream, ChangeStreamDocument } from "mongoose";
 import { createHash } from "crypto";
 import {

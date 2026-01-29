@@ -1,7 +1,6 @@
 #!/bin/bash
 # Complete Load Test Workflow
 # Orchestrates system startup, test execution, and report generation
-# @format
 
 set -e
 

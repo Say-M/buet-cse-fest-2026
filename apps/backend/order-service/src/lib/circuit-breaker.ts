@@ -9,7 +9,6 @@
  * - OPEN: Requests fail immediately without calling the service
  * - HALF_OPEN: Allow one test request to check if service recovered
  *
- * @format
  */
 
 export type CircuitState = "CLOSED" | "OPEN" | "HALF_OPEN";

@@ -1,5 +1,3 @@
-/** @format */
-
 import type { ExternalBackupProvider } from "../backup-service";
 
 /**

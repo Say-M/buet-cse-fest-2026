@@ -17,7 +17,6 @@
  *   --concurrency=N      Concurrent requests (default: 5)
  *   --timeout=MS         Request timeout in ms (default: 10000)
  *
- * @format
  */
 
 const GATEWAY_URL =

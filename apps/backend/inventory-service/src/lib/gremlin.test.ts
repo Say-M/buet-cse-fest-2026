@@ -1,6 +1,5 @@
 /**
  * Unit tests for gremlin latency (deterministic delay and getDelayMs)
- * @format
  */
 
 import { describe, expect, test } from "bun:test";

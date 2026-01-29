@@ -8,7 +8,6 @@
  * - Timeout management
  * - Idempotency
  * 
- * @format
  */
 
 import http from 'k6/http';

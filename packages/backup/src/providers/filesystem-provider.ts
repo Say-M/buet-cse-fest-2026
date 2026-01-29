@@ -1,5 +1,3 @@
-/** @format */
-
 import { createWriteStream, createReadStream, existsSync, mkdirSync } from "fs";
 import { readFile, writeFile, mkdir, readdir, stat } from "fs/promises";
 import { join } from "path";

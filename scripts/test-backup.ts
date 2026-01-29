@@ -11,7 +11,6 @@
  * Usage:
  *   bun run scripts/test-backup.ts
  *
- * @format
  */
 
 const ORDER_SERVICE_URL =

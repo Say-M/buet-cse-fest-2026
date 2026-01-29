@@ -1,5 +1,3 @@
-/** @format */
-
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IIdempotencyKey extends Document {

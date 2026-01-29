@@ -1,5 +1,3 @@
-/** @format */
-
 import app, { stats } from "./app";
 import healthRoutes from "./routes/health";
 import { startOrderConsumer, stopOrderConsumer } from "./consumers/order.consumer";
@@ -16,7 +14,7 @@ app.get("/notifications/stats", (c) => {
   });
 });
 
-const port = process.env.PORT || 3003;
+const port = process.env.PORT || 3006;
 
 // Start RabbitMQ consumer
 startOrderConsumer().catch((error) => {

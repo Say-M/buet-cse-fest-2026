@@ -1,5 +1,3 @@
-/** @format */
-
 import { Hono } from "hono";
 import { rateLimiter } from "hono-rate-limiter";
 import { HTTPException } from "hono/http-exception";

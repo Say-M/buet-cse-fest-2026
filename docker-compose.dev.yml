@@ -39,7 +39,7 @@ services:
       - ORDER_SERVICE_URL=http://order-service:3001
       - INVENTORY_SERVICE_URL=http://inventory-service:3002
       - AUTH_SERVICE_URL=http://auth-service:9000
-      - NOTIFICATION_SERVICE_URL=http://notification-service:3003
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3006
       - PAYMENT_SERVICE_URL=http://payment-service:3004
       - ANALYTICS_SERVICE_URL=http://analytics-service:3005
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
@@ -140,14 +140,14 @@ services:
       context: .
       dockerfile: apps/backend/notification-service/Dockerfile
     ports:
-      - "3003:3003"
+      - "3006:3006"
     depends_on:
       rabbitmq:
         condition: service_healthy
       otel-collector:
         condition: service_started
     environment:
-      - PORT=3003
+      - PORT=3006
       - NODE_ENV=development
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318

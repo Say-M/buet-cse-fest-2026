@@ -1,5 +1,3 @@
-/** @format */
-
 import { Hono } from "hono";
 import { createProxyMiddleware } from "../middleware/proxy";
 
@@ -10,7 +8,7 @@ const INVENTORY_SERVICE_URL =
 const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL || "http://localhost:9000";
 const NOTIFICATION_SERVICE_URL =
-  process.env.NOTIFICATION_SERVICE_URL || "http://localhost:3003";
+  process.env.NOTIFICATION_SERVICE_URL || "http://localhost:3006";
 const PAYMENT_SERVICE_URL =
   process.env.PAYMENT_SERVICE_URL || "http://localhost:3004";
 const ANALYTICS_SERVICE_URL =

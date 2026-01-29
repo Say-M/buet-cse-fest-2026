@@ -1,5 +1,3 @@
-/** @format */
-
 import { z } from "zod";
 
 export const orderItemSchema = z.object({

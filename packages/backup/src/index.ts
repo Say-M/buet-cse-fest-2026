@@ -1,5 +1,3 @@
-/** @format */
-
 /**
  * @repo/backup - Incremental Backup with Write-Ahead Logs
  *

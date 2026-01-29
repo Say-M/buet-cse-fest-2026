@@ -4,7 +4,6 @@
  * Establishes baseline performance metrics under normal load.
  * Used to compare against stress and resilience tests.
  * 
- * @format
  */
 
 import http from 'k6/http';

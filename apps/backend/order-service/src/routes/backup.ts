@@ -1,5 +1,3 @@
-/** @format */
-
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
 import type { AppBindings } from "../app";

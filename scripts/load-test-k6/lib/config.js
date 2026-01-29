@@ -1,7 +1,6 @@
 /**
  * K6 Load Test Configuration
  * Shared configuration for all test scenarios
- * @format
  */
 
 export const CONFIG = {

@@ -1,5 +1,3 @@
-/** @format */
-
 import pino from "pino";
 import { trace, context } from "@opentelemetry/api";
 

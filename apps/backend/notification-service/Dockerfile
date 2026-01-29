@@ -46,6 +46,6 @@ COPY --from=builder --chown=hono:nodejs /app/apps/backend/notification-service .
 
 WORKDIR /app/apps/backend/notification-service
 
-EXPOSE 3003
+EXPOSE 3006
 
 CMD ["bun", "run", "src/index.ts"]

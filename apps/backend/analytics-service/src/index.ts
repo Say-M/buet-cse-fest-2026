@@ -1,5 +1,3 @@
-/** @format */
-
 import app from "./app";
 import healthRoutes from "./routes/health";
 import analyticsRoutes from "./routes/analytics";

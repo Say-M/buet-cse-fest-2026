@@ -1,6 +1,5 @@
 /**
  * Unit tests for circuit breaker
- * @format
  */
 
 import { describe, expect, test } from "bun:test";
