@@ -59,6 +59,8 @@ export class InventoryService {
   async reserveStock(
     productId: string,
     quantity: number,
+    requestId?: string,
+    adjustmentRequestId?: string,
   ): Promise<{
     success: boolean;
     inventory: IInventory | null;
@@ -102,6 +104,14 @@ export class InventoryService {
         inventory,
         message: "Failed to reserve stock - concurrent modification",
       };
+    }
+
+    // Schrödinger failure injection (if requestId provided)
+    if (requestId) {
+      const { maybeSchrodingerCrash } = await import("../lib/gremlin");
+      if (maybeSchrodingerCrash(requestId)) {
+        throw new Error("Connection dropped - Schrödinger simulation");
+      }
     }
 
     return {
@@ -208,8 +218,26 @@ export class InventoryService {
    */
   async processEventIdempotently<T>(
     eventId: string,
+    adjustmentRequestId: string | undefined,
+    operationType: string,
     processor: () => Promise<T>,
   ): Promise<{ processed: boolean; result?: T }> {
+    // Check by adjustmentRequestId first (if provided)
+    if (adjustmentRequestId) {
+      const existing = await ProcessedEvent.findOne({
+        adjustmentRequestId,
+        operationType,
+      });
+
+      if (existing) {
+        console.log(
+          `[InventoryService] Request ${adjustmentRequestId} (${operationType}) already processed, returning cached result`,
+        );
+        return { processed: false, result: existing.result };
+      }
+    }
+
+    // Check by eventId (fallback)
     if (await this.isEventProcessed(eventId)) {
       console.log(
         `[InventoryService] Event ${eventId} already processed, skipping`,
@@ -217,10 +245,28 @@ export class InventoryService {
       return { processed: false };
     }
 
+    // Process and store
     const result = await processor();
-    await this.markEventProcessed(eventId);
+
+    await ProcessedEvent.create({
+      eventId,
+      adjustmentRequestId,
+      operationType,
+      result,
+      processedAt: new Date(),
+    });
 
     return { processed: true, result };
+  }
+
+  /**
+   * Get processed request by adjustmentRequestId
+   */
+  async getProcessedRequest(
+    adjustmentRequestId: string,
+    operationType: string,
+  ): Promise<IProcessedEvent | null> {
+    return ProcessedEvent.findOne({ adjustmentRequestId, operationType });
   }
 
   /**

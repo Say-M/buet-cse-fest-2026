@@ -14,6 +14,7 @@ interface OrderEvent {
   eventType: string;
   payload: {
     orderId: string;
+    adjustmentRequestId?: string;
     items: Array<{
       productId: string;
       quantity: number;
@@ -78,10 +79,16 @@ export async function startOrderConsumer(): Promise<void> {
 }
 
 async function handleOrderCreated(event: OrderEvent): Promise<void> {
-  const { processed } = await inventoryService.processEventIdempotently(
+  // Extract adjustment request ID from payload
+  const adjustmentRequestId = event.payload.adjustmentRequestId;
+
+  const { processed, result } = await inventoryService.processEventIdempotently(
     event.eventId,
+    adjustmentRequestId,
+    "reserve",
     async () => {
       // Reserve stock for each item in the order
+      const results = [];
       for (const item of event.payload.items) {
         const result = await inventoryService.reserveStock(
           item.productId,
@@ -102,22 +109,36 @@ async function handleOrderCreated(event: OrderEvent): Promise<void> {
             `[OrderConsumer] Reserved ${item.quantity} units of ${item.productId}`,
           );
         }
+        results.push(result);
       }
 
-      return { orderId: event.payload.orderId, status: "reserved" };
+      return {
+        orderId: event.payload.orderId,
+        status: "reserved",
+        results,
+      };
     },
   );
 
   if (!processed) {
-    console.log(`[OrderConsumer] Event ${event.eventId} was already processed`);
+    console.log(
+      `[OrderConsumer] Event ${event.eventId} was already processed, result:`,
+      result,
+    );
   }
 }
 
 async function handleOrderShipped(event: OrderEvent): Promise<void> {
-  const { processed } = await inventoryService.processEventIdempotently(
+  // Extract adjustment request ID from payload
+  const adjustmentRequestId = event.payload.adjustmentRequestId;
+
+  const { processed, result } = await inventoryService.processEventIdempotently(
     event.eventId,
+    adjustmentRequestId,
+    "confirm",
     async () => {
       // Confirm stock deduction for each item
+      const results = [];
       for (const item of event.payload.items) {
         const result = await inventoryService.confirmStockDeduction(
           item.productId,
@@ -134,14 +155,22 @@ async function handleOrderShipped(event: OrderEvent): Promise<void> {
             `[OrderConsumer] Confirmed deduction of ${item.quantity} units from ${item.productId}`,
           );
         }
+        results.push(result);
       }
 
-      return { orderId: event.payload.orderId, status: "deducted" };
+      return {
+        orderId: event.payload.orderId,
+        status: "deducted",
+        results,
+      };
     },
   );
 
   if (!processed) {
-    console.log(`[OrderConsumer] Event ${event.eventId} was already processed`);
+    console.log(
+      `[OrderConsumer] Event ${event.eventId} was already processed, result:`,
+      result,
+    );
   }
 }
 

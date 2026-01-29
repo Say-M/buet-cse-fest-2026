@@ -5,7 +5,10 @@ import { describeRoute, resolver, validator as zValidator } from "hono-openapi";
 import type { OpenAPIV3_1 } from "openapi-types";
 import { z } from "zod";
 import { inventoryService } from "../services/inventory.service";
-import { maybeApplyGremlinLatency, getGremlinStats } from "../lib/gremlin";
+import {
+  maybeApplyGremlinLatencyDeterministic,
+  getGremlinStats,
+} from "../lib/gremlin";
 import {
   productIdParamSchema,
   inventoryResponseSchema,
@@ -73,8 +76,10 @@ inventoryRoutes.get(
   }),
   zValidator("param", productIdParamSchema),
   async (c) => {
-    // Apply gremlin latency
-    const delayApplied = await maybeApplyGremlinLatency();
+    // Apply deterministic gremlin latency based on request ID
+    const requestId = c.get("requestId") as string;
+    const delayApplied =
+      await maybeApplyGremlinLatencyDeterministic(requestId);
     if (delayApplied > 0) {
       c.header("X-Gremlin-Delay-Ms", delayApplied.toString());
     }
@@ -121,41 +126,101 @@ inventoryRoutes.post(
   zValidator("param", productIdParamSchema),
   zValidator("json", reserveStockSchema),
   async (c) => {
-    // Apply gremlin latency
-    const delayApplied = await maybeApplyGremlinLatency();
+    const { productId } = c.req.valid("param");
+    const { quantity, adjustmentRequestId } = c.req.valid("json");
+    const requestId = c.get("requestId") as string;
+
+    // Apply deterministic gremlin latency based on request ID
+    const delayApplied =
+      await maybeApplyGremlinLatencyDeterministic(requestId);
     if (delayApplied > 0) {
       c.header("X-Gremlin-Delay-Ms", delayApplied.toString());
     }
 
-    const { productId } = c.req.valid("param");
-    const { quantity } = c.req.valid("json");
+    // Check idempotency first
+    if (adjustmentRequestId) {
+      const existing = await inventoryService.getProcessedRequest(
+        adjustmentRequestId,
+        "reserve",
+      );
 
-    const result = await inventoryService.reserveStock(productId, quantity);
+      if (existing && existing.result) {
+        console.log(
+          `[Inventory] Returning cached result for adjustmentRequestId: ${adjustmentRequestId}`,
+        );
+        c.header("X-Cache-Hit", "true");
+        return c.json(existing.result);
+      }
+    }
+
+    const result = await inventoryService.reserveStock(
+      productId,
+      quantity,
+      requestId,
+      adjustmentRequestId,
+    );
 
     if (!result.success) {
       const status = result.inventory ? 400 : 404;
-      return c.json(
-        {
-          success: false,
-          productId,
-          reservedQuantity: 0,
-          remainingStock: result.inventory
-            ? result.inventory.quantity - result.inventory.reservedQuantity
-            : 0,
-          message: result.message,
-        },
-        status,
-      );
+      const response = {
+        success: false,
+        productId,
+        reservedQuantity: 0,
+        remainingStock: result.inventory
+          ? result.inventory.quantity - result.inventory.reservedQuantity
+          : 0,
+        message: result.message,
+      };
+
+      // Cache failure result too (if adjustmentRequestId provided)
+      if (adjustmentRequestId) {
+        try {
+          await inventoryService
+            .processEventIdempotently(
+              `reserve-${requestId}`,
+              adjustmentRequestId,
+              "reserve",
+              async () => response,
+            )
+            .catch(() => {
+              /* Ignore cache errors */
+            });
+        } catch (e) {
+          /* Ignore cache errors */
+        }
+      }
+
+      return c.json(response, status);
     }
 
-    return c.json({
+    const response = {
       success: true,
       productId,
       reservedQuantity: quantity,
       remainingStock:
         result.inventory!.quantity - result.inventory!.reservedQuantity,
       message: result.message,
-    });
+    };
+
+    // Cache success result (if adjustmentRequestId provided)
+    if (adjustmentRequestId) {
+      try {
+        await inventoryService
+          .processEventIdempotently(
+            `reserve-${requestId}`,
+            adjustmentRequestId,
+            "reserve",
+            async () => response,
+          )
+          .catch(() => {
+            /* Ignore cache errors */
+          });
+      } catch (e) {
+        /* Ignore cache errors */
+      }
+    }
+
+    return c.json(response);
   },
 );
 
