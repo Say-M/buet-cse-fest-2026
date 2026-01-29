@@ -1,0 +1,283 @@
+# @format
+
+services:
+  # ============ APPLICATION SERVICES ============
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/backend/gateway/Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - order-service
+      - inventory-service
+      - auth-service
+      - otel-collector
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - ORDER_SERVICE_URL=http://order-service:3001
+      - INVENTORY_SERVICE_URL=http://inventory-service:3002
+      - AUTH_SERVICE_URL=http://auth-service:9000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=gateway
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: .
+      dockerfile: apps/backend/order-service/Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+      - INVENTORY_SERVICE_URL=http://inventory-service:3002
+      - MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/order_db?replicaSet=rs0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=order-service
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: apps/backend/inventory-service/Dockerfile
+    ports:
+      - "3002:3002"
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      - PORT=3002
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/inventory_db?replicaSet=rs0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - GREMLIN_ENABLED=true
+      - GREMLIN_FREQUENCY=5
+      - GREMLIN_MIN_DELAY_MS=5000
+      - GREMLIN_MAX_DELAY_MS=8000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=inventory-service
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/backend/auth-service/Dockerfile
+    ports:
+      - "9000:9000"
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      - PORT=9000
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/auth_db?replicaSet=rs0
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=auth-service
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - JWT_EXPIRES_IN=24h
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ============ MONGODB PSS REPLICA SET ============
+  mongo1:
+    image: mongo:7
+    container_name: mongo1
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo1_data:/data/db
+    healthcheck:
+      test: |
+        mongosh --port 27017 --quiet --eval "
+        try {
+          rs.status();
+        } catch (e) {
+          rs.initiate({
+            _id: 'rs0',
+            members: [
+              { _id: 0, host: 'mongo1:27017', priority: 2 },
+              { _id: 1, host: 'mongo2:27017', priority: 1 },
+              { _id: 2, host: 'mongo3:27017', priority: 1 }
+            ]
+          });
+        }
+        "
+      interval: 10s
+      timeout: 30s
+      retries: 30
+      start_period: 40s
+    networks:
+      - app-network
+
+  mongo2:
+    image: mongo:7
+    container_name: mongo2
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo2_data:/data/db
+    depends_on:
+      - mongo1
+    networks:
+      - app-network
+
+  mongo3:
+    image: mongo:7
+    container_name: mongo3
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo3_data:/data/db
+    depends_on:
+      - mongo1
+    networks:
+      - app-network
+
+  # ============ MESSAGE BROKER ============
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672" # AMQP
+      - "15672:15672" # Management UI
+      - "15692:15692" # Prometheus metrics
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    tmpfs:
+      - /var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics check_running
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app-network
+
+  # ============ OBSERVABILITY STACK ============
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8889:8889" # Prometheus metrics endpoint
+    depends_on:
+      - jaeger
+      - loki
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: prometheus
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+      - "--web.enable-remote-write-receiver"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14268:14268" # Jaeger collector HTTP
+      - "6831:6831/udp" # Jaeger agent UDP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: grafana
+    ports:
+      - "3030:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_EXPLORE_ENABLED=true
+      - GF_ALERTING_ENABLED=false
+      - GF_UNIFIED_ALERTING_ENABLED=true
+    depends_on:
+      - prometheus
+      - loki
+      - jaeger
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:
