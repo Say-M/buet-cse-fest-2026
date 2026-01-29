@@ -10,12 +10,14 @@ initTelemetry({
 import app, { circuitBreakerState, outboxEventsPending } from "./app";
 import ordersRoutes from "./routes/orders";
 import healthRoutes from "./routes/health";
+import backupRoutes from "./routes/backup";
 import connectDB from "@repo/common/db/mongo";
 import {
   startOutboxWorker,
   stopOutboxWorker,
   getPendingEventCount,
 } from "./workers/outbox.worker";
+import { startBackupWorker, stopBackupWorker } from "./workers/backup.worker";
 import { getCircuitBreakerStats } from "./services/inventory.client";
 
 // Connect to MongoDB
@@ -47,9 +49,47 @@ const startWorkerWithRetry = async (retries = 5, delay = 5000) => {
 // Start worker in background
 startWorkerWithRetry();
 
+// Start backup worker if enabled
+const startBackupWithRetry = async (retries = 5, delay = 5000) => {
+  if (process.env.BACKUP_ENABLED !== "true") {
+    console.log(
+      "[OrderService] Backup worker disabled (set BACKUP_ENABLED=true to enable)",
+    );
+    return;
+  }
+
+  for (let i = 0; i < retries; i++) {
+    try {
+      await startBackupWorker({
+        database: process.env.MONGO_DB_NAME || "order_db",
+        serviceName: "order-service",
+        dailyBackupHour: parseInt(process.env.BACKUP_HOUR || "2", 10),
+      });
+      console.log("[OrderService] Backup worker started successfully");
+      return;
+    } catch (error) {
+      console.error(
+        `[OrderService] Failed to start backup worker (attempt ${i + 1}/${retries}):`,
+        error,
+      );
+      if (i < retries - 1) {
+        console.log(`[OrderService] Retrying in ${delay / 1000} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+  console.warn(
+    "[OrderService] Could not start backup worker after all retries.",
+  );
+};
+
+// Start backup worker in background
+startBackupWithRetry();
+
 // Mount routes
 app.route("/orders", ordersRoutes);
 app.route("/health", healthRoutes);
+app.route("/backup", backupRoutes);
 
 // Update metrics periodically
 setInterval(async () => {
@@ -72,12 +112,14 @@ setInterval(async () => {
 process.on("SIGTERM", async () => {
   console.log("[OrderService] SIGTERM received, shutting down...");
   await stopOutboxWorker();
+  await stopBackupWorker();
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
   console.log("[OrderService] SIGINT received, shutting down...");
   await stopOutboxWorker();
+  await stopBackupWorker();
   process.exit(0);
 });
 

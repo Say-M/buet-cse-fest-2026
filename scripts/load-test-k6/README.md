@@ -41,10 +41,11 @@ Production-grade load testing for e-commerce microservices using k6.
 bash scripts/run-load-test.sh [scenario]
 
 # Examples
-bash scripts/run-load-test.sh resilience
-bash scripts/run-load-test.sh baseline
-bash scripts/run-load-test.sh stress
-bash scripts/run-load-test.sh spike
+bash scripts/run-load-test.sh ci          # CI-friendly: 2min, 5 VUs (RECOMMENDED FOR CI)
+bash scripts/run-load-test.sh resilience  # Full resilience: 5min, 20-50 VUs
+bash scripts/run-load-test.sh baseline    # Baseline: 3min, 10 VUs
+bash scripts/run-load-test.sh stress      # Stress: 7min, up to 100 VUs
+bash scripts/run-load-test.sh spike       # Spike: 2.5min, spike to 200 VUs
 ```
 
 ### Run Individual Steps
@@ -63,6 +64,13 @@ cat artifacts/affected-orders.json | jq '.summary'
 ```
 
 ## Test Scenarios
+
+### CI (Simplest - For CI/CD)
+- **Duration:** 2 minutes
+- **Load:** 5 concurrent users
+- **Purpose:** Quick validation for CI/CD pipelines
+- **Thresholds:** Very lenient (p95 < 10s, < 50% errors)
+- **Use case:** GitHub Actions, GitLab CI, automated testing
 
 ### Baseline
 - **Duration:** 3 minutes

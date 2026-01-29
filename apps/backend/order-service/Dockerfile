@@ -9,12 +9,13 @@ COPY package.json bun.lock ./
 COPY packages/common/package.json ./packages/common/
 COPY packages/rabbitmq/package.json ./packages/rabbitmq/
 COPY packages/telemetry/package.json ./packages/telemetry/
+COPY packages/backup/package.json ./packages/backup/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY apps/backend/order-service/package.json ./apps/backend/order-service/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Build stage
 FROM base AS builder
@@ -26,6 +27,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY packages/common ./packages/common
 COPY packages/rabbitmq ./packages/rabbitmq
 COPY packages/telemetry ./packages/telemetry
+COPY packages/backup ./packages/backup
 COPY packages/typescript-config ./packages/typescript-config
 COPY packages/eslint-config ./packages/eslint-config
 COPY apps/backend/order-service ./apps/backend/order-service

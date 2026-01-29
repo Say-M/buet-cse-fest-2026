@@ -12,7 +12,7 @@ COPY packages/telemetry/package.json ./packages/telemetry/
 COPY apps/backend/gateway/package.json ./apps/backend/gateway/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Build stage
 FROM base AS builder

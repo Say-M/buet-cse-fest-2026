@@ -18,6 +18,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "test:load:ci": "bash scripts/run-load-test.sh ci",
     "infra:up": "docker compose -f docker-compose.infra.yml up -d",
     "infra:down": "docker compose -f docker-compose.infra.yml down",
     "infra:logs": "docker compose -f docker-compose.infra.yml logs -f",
