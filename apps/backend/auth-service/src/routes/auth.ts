@@ -17,7 +17,7 @@ import {
 import { responseSchema } from "@repo/common/schemas/response";
 import { roleGuard } from "@/middlewares/auth-guard";
 
-const route = app.basePath("/api/auth");
+const route = app;
 
 route.post(
   "/login",
@@ -104,6 +104,7 @@ route.get(
 
 route.post(
   "/logout",
+  roleGuard({ allowedRoles: -1 }),
   describeRoute({
     tags: ["Auth"],
     summary: "Logout",

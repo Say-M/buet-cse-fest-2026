@@ -18,12 +18,15 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationsDropdown } from "./notifications-dropdown";
+import { useLogout } from "@/hooks/api/auth";
+import { Spinner } from "./ui/spinner";
 
 export function PublicHeader() {
   const { getTotalItems } = useCart();
   const { user } = useContext(AuthContext);
   const isMobile = useIsMobile();
   const cartItemsCount = getTotalItems();
+  const {mutate: logoutMutation, isPending: isLoggingOut} = useLogout();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -75,7 +78,7 @@ export function PublicHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                <DropdownMenuLabel>{user?.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/profile">Profile</Link>
@@ -84,7 +87,7 @@ export function PublicHeader() {
                   <Link href="/dashboard">Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => logoutMutation()} disabled={isLoggingOut}>Logout{ isLoggingOut && <Spinner /> }</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

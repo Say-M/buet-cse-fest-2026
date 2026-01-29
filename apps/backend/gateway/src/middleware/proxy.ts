@@ -8,6 +8,43 @@ interface ProxyConfig {
   timeout?: number;
 }
 
+function splitSetCookieHeader(value: string): string[] {
+  // Some runtimes collapse multiple Set-Cookie headers into a single comma-separated string.
+  // We must split on commas that are NOT within an Expires=... attribute (which itself contains a comma).
+  const parts: string[] = [];
+  let start = 0;
+  let inExpires = false;
+
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+
+    // Detect "Expires=" (case-insensitive) to avoid splitting on its comma
+    if (!inExpires && (ch === "E" || ch === "e")) {
+      const maybe = value.slice(i, i + 8);
+      if (maybe.toLowerCase() === "expires=") {
+        inExpires = true;
+        i += 7; // jump to end of "Expires="
+        continue;
+      }
+    }
+
+    if (inExpires) {
+      if (ch === ";") inExpires = false;
+      continue;
+    }
+
+    if (ch === ",") {
+      const piece = value.slice(start, i).trim();
+      if (piece) parts.push(piece);
+      start = i + 1;
+    }
+  }
+
+  const last = value.slice(start).trim();
+  if (last) parts.push(last);
+  return parts;
+}
+
 /**
  * Create a proxy middleware that forwards requests to a target service
  */
@@ -37,6 +74,7 @@ export function createProxyMiddleware(config: ProxyConfig) {
       const headersToForward = [
         "content-type",
         "authorization",
+        "cookie",
         "x-idempotency-key",
         "x-request-id",
         "accept",
@@ -78,33 +116,57 @@ export function createProxyMiddleware(config: ProxyConfig) {
         }
       }
 
+      console.log({ fullUrl, fetchOptions });
+
       const response = await fetch(fullUrl, fetchOptions);
 
-      // Copy response headers
-      const responseHeaders: Record<string, string> = {};
+      const status = response.status;
+      console.log({status});
+      
+
+      // Build response headers (preserve multi-value Set-Cookie)
+      const outgoingHeaders = new Headers();
       const headersToReturn = [
         "content-type",
         "x-circuit-state",
         "x-gremlin-delay-ms",
         "x-request-id",
-      ];
+      ] as const;
 
       for (const header of headersToReturn) {
         const value = response.headers.get(header);
-        if (value) {
-          responseHeaders[header] = value;
+        if (value) outgoingHeaders.set(header, value);
+      }
+
+      // Forward Set-Cookie so browser stores cookies for the gateway domain
+      const getSetCookie = (response.headers as any).getSetCookie as
+        | (() => string[])
+        | undefined;
+      const setCookies = getSetCookie?.() ?? [];
+      if (setCookies.length > 0) {
+        for (const cookie of setCookies) outgoingHeaders.append("set-cookie", cookie);
+      } else {
+        const single = response.headers.get("set-cookie");
+        if (single) {
+          // If collapsed, re-split and re-emit as multiple Set-Cookie headers
+          const cookies = splitSetCookieHeader(single);
+          if (cookies.length <= 1) {
+            outgoingHeaders.append("set-cookie", single);
+          } else {
+            for (const cookie of cookies) outgoingHeaders.append("set-cookie", cookie);
+          }
         }
       }
 
       // Add gateway timing header
-      responseHeaders["X-Gateway-Time-Ms"] = (
-        Date.now() - startTime
-      ).toString();
+      outgoingHeaders.set(
+        "X-Gateway-Time-Ms",
+        (Date.now() - startTime).toString(),
+      );
 
       // Return the proxied response
       const body = await response.text();
-
-      return c.body(body, response.status as any, responseHeaders);
+      return new Response(body, { status: response.status, headers: outgoingHeaders });
     } catch (error) {
       const elapsed = Date.now() - startTime;
 

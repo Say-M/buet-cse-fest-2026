@@ -10,7 +10,6 @@ export const roleGuard = ({ allowedRoles }: { allowedRoles: Role[] | -1 }) => {
   return async (c: Context<AppBindings>, next: Next) => {
     let accessToken =
       getCookie(c, "accessToken") || c.req.header("x-access-token");
-    console.log(accessToken);
     let user: UserType | null = null;
     if (accessToken) {
       const decoded = await verifyToken(accessToken, "EdDSA");
@@ -25,7 +24,8 @@ export const roleGuard = ({ allowedRoles }: { allowedRoles: Role[] | -1 }) => {
           401,
         );
 
-      user = await User.findById(decoded.userId).select("-hashedPassword");
+      user = await User.findById(decoded.userId).select("-hashedPassword"); 
+      
 
       if (!user)
         return c.json(
@@ -41,6 +41,7 @@ export const roleGuard = ({ allowedRoles }: { allowedRoles: Role[] | -1 }) => {
         c.set("user", user);
         return await next();
       }
+
 
       if (allowedRoles && !allowedRoles.includes(user.role))
         return c.json(

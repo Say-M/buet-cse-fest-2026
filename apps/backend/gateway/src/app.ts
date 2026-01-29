@@ -58,15 +58,15 @@ app.get("/metrics", printMetrics);
 app.use(requestId());
 
 // Logging
-app.use(
-  pinoLogger({
-    pino: pino(
-      process.env.NODE_ENV === "production"
-        ? { level: process.env.LOG_LEVEL || "info" }
-        : PinoPretty(),
-    ),
-  }),
-);
+// app.use(
+//   pinoLogger({
+//     pino: pino(
+//       process.env.NODE_ENV === "production"
+//         ? { level: process.env.LOG_LEVEL || "info" }
+//         : PinoPretty(),
+//     ),
+//   }),
+// );
 
 // Security headers
 app.use(secureHeaders());

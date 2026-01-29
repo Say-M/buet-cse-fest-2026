@@ -34,20 +34,20 @@ app.use("*", registerMetrics);
 app.get("/metrics", printMetrics);
 
 app.use(requestId());
-app.use(
-  pinoLogger({
-    pino: pino(
-      process.env.NODE_ENV === "production"
-        ? { level: process.env.LOG_LEVEL || "info" }
-        : PinoPretty(),
-    ),
-  }),
-);
+// app.use(
+//   pinoLogger({
+//     pino: pino(
+//       process.env.NODE_ENV === "production"
+//         ? { level: process.env.LOG_LEVEL || "info" }
+//         : PinoPretty(),
+//     ),
+//   }),
+// );
 
 app.use(secureHeaders());
 
 app.onError((error, c) => {
-  c.var.logger.error(error);
+  // c.var.logger.error(error);
   let status: ContentfulStatusCode = 500;
   let message = "Internal server error";
   const timestamp = new Date().toISOString();
@@ -99,12 +99,12 @@ app.use(
   }),
 );
 
-app.use(
-  "*",
-  csrf({
-    origin: process.env?.CSRF_ORIGINS?.split(",") || ["*"],
-  }),
-);
+// app.use(
+//   "*",
+//   csrf({
+//     origin: process.env?.CSRF_ORIGINS?.split(",") || ["*"],
+//   }),
+// );
 
 app.use(
   rateLimiter({

@@ -59,7 +59,9 @@ export const useLogout = () => {
     onSuccess: (data) => {
       toast.success(data.message);
       setUser(null);
-      router.push("/auth/login");
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 50);
     },
     onError: (error: AxiosError) => {
       toast.error((error.response?.data as { message: string }).message);

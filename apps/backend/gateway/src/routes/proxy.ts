@@ -51,6 +51,9 @@ proxyRoutes.all(
 );
 
 // Auth Service routes
+// Auth service now mounts routes under basePath("/api/auth"),
+// so we do NOT strip /api/auth here. The gateway will call
+// e.g. http://auth-service/api/auth/login directly.
 proxyRoutes.all(
   "/api/auth/*",
   createProxyMiddleware({
