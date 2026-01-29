@@ -18,7 +18,7 @@ export const useLogin = () => {
     },
     onSuccess: (data) => {
       toast.success(data.message);
-      setUser(data.data.user);
+      setUser(data?.data?.user ?? null);
       router.push("/");
     },
     onError: (error: AxiosError) => {
@@ -38,7 +38,7 @@ export const useRegister = () => {
     },
     onSuccess: (data) => {
       toast.success(data.message);
-      setUser(data.data.user);
+      setUser(data?.data?.user ?? null);
       router.push("/");
     },
     onError: (error: AxiosError) => {
@@ -98,8 +98,8 @@ export const useUpdateProfile = () => {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Profile updated successfully");
-      if (data.data?.user) {
-        setUser(data.data.user);
+      if (data?.data?.user) {
+        setUser(data?.data?.user ?? null);
       }
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },

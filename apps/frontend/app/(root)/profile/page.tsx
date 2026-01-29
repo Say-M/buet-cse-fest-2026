@@ -80,8 +80,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (displayUser) {
       form.reset({
-        name: displayUser.name || "",
-        email: displayUser.email || "",
+        name: displayUser?.name || "",
+        email: displayUser?.email || "",
       });
     }
   }, [displayUser, form]);
@@ -144,7 +144,7 @@ export default function ProfilePage() {
                         <div className="text-sm font-medium text-muted-foreground">
                           Role
                         </div>
-                        <Badge variant="outline">{displayUser.role}</Badge>
+                        <Badge variant="outline">{displayUser?.role}</Badge>
                       </div>
                     </>
                   )}

@@ -81,7 +81,7 @@ export default function CheckoutPage() {
     try {
       const idempotencyKey = crypto.randomUUID();
       await createOrder.mutateAsync({
-        customerId: user._id,
+        customerId: user?._id,
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         shippingAddress: data.shippingAddress,
