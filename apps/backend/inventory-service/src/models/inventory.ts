@@ -56,7 +56,10 @@ export const Inventory = mongoose.model<IInventory>(
 
 // Processed events collection for idempotency
 export interface IProcessedEvent extends Document {
-  eventId: string;
+  eventId: string; // RabbitMQ message ID
+  adjustmentRequestId?: string; // Logical operation ID
+  operationType: string; // "reserve", "release", "confirm"
+  result: any; // Cached result for replay
   processedAt: Date;
 }
 
@@ -67,12 +70,29 @@ const processedEventSchema = new Schema<IProcessedEvent>({
     unique: true,
     index: true,
   },
+  adjustmentRequestId: {
+    type: String,
+    index: true,
+  },
+  operationType: {
+    type: String,
+    required: true,
+  },
+  result: {
+    type: Schema.Types.Mixed,
+  },
   processedAt: {
     type: Date,
     required: true,
     default: Date.now,
   },
 });
+
+// Compound unique index: adjustmentRequestId + operationType
+processedEventSchema.index(
+  { adjustmentRequestId: 1, operationType: 1 },
+  { unique: true, sparse: true }, // sparse allows null values
+);
 
 // TTL index to auto-delete old events after 7 days
 processedEventSchema.index(

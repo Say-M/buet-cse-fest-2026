@@ -18,6 +18,7 @@ export const inventoryResponseSchema = z.object({
 export const reserveStockSchema = z.object({
   quantity: z.number().int().positive("Quantity must be positive"),
   orderId: z.string().optional(),
+  adjustmentRequestId: z.string().uuid().optional(),
 });
 
 export const reserveResponseSchema = z.object({
