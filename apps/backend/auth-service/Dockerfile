@@ -7,6 +7,7 @@ WORKDIR /app
 # Copy workspace configuration
 COPY package.json bun.lock ./
 COPY packages/common/package.json ./packages/common/
+COPY packages/telemetry/package.json ./packages/telemetry/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY apps/backend/auth-service/package.json ./apps/backend/auth-service/
@@ -22,6 +23,7 @@ COPY --from=deps /app/node_modules ./node_modules
 
 # Copy source files
 COPY packages/common ./packages/common
+COPY packages/telemetry ./packages/telemetry
 COPY packages/typescript-config ./packages/typescript-config
 COPY packages/eslint-config ./packages/eslint-config
 COPY apps/backend/auth-service ./apps/backend/auth-service
