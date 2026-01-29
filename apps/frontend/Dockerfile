@@ -5,10 +5,24 @@ FROM oven/bun:1 AS base
 FROM base AS deps
 WORKDIR /app
 
-# Copy package files
+# Copy workspace root package files
 COPY package.json bun.lock ./
 
-# Install dependencies with frozen lockfile
+# Copy all workspace package.json files for dependency resolution
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/copy/package.json ./packages/copy/
+COPY packages/common/package.json ./packages/common/
+COPY packages/rabbitmq/package.json ./packages/rabbitmq/
+COPY packages/telemetry/package.json ./packages/telemetry/
+COPY packages/backup/package.json ./packages/backup/
+
+# Copy frontend app package.json
+COPY apps/frontend/package.json ./apps/frontend/
+
+# Install dependencies
 RUN bun install
 
 # Rebuild the source code only when needed
@@ -17,15 +31,20 @@ WORKDIR /app
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+
+# Copy workspace packages source (needed for @repo/* imports)
+COPY packages ./packages
+
+# Copy frontend app
+COPY apps/frontend ./apps/frontend
 
 # Set environment variables for build
 # Add your build-time environment variables here
 # ENV NEXT_PUBLIC_API_URL=https://your-api.com
-# ENV NEXT_PUBLIC_AGENT_URL=https://your-agent.com
 
-# Build the Next.js application
-RUN bun run build
+# Build the Next.js application directly (not using turbo for Docker builds)
+WORKDIR /app/apps/frontend
+RUN bun --bun next build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -39,15 +58,15 @@ RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy necessary files from builder
-COPY --from=builder /app/public ./public
+COPY --from=builder /app/apps/frontend/public ./public
 
 # Set correct permissions for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
 # Automatically leverage output traces to reduce image size
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static ./.next/static
 
 # Switch to non-root user
 USER nextjs
