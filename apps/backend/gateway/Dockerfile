@@ -8,6 +8,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/telemetry/package.json ./packages/telemetry/
 COPY apps/backend/gateway/package.json ./apps/backend/gateway/
 
 # Install dependencies
@@ -22,6 +23,7 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source files
 COPY packages/typescript-config ./packages/typescript-config
 COPY packages/eslint-config ./packages/eslint-config
+COPY packages/telemetry ./packages/telemetry
 COPY apps/backend/gateway ./apps/backend/gateway
 
 # Production stage
