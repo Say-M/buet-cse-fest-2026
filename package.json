@@ -1,13 +1,5 @@
 {
   "name": "computer-security",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
-  },
   "devDependencies": {
     "prettier": "^3.7.4",
     "turbo": "^2.7.5",
@@ -16,9 +8,29 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "bun@1.2.23",
+  "packageManager": "bun@1.3.6",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:backend": "turbo run dev --filter=gateway --filter=order-service --filter=inventory-service --filter=auth-service",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
+    "infra:up": "docker compose -f docker-compose.infra.yml up -d",
+    "infra:down": "docker compose -f docker-compose.infra.yml down",
+    "infra:logs": "docker compose -f docker-compose.infra.yml logs -f",
+    "docker:dev:up": "docker compose -f docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down -v",
+    "docker:prod:up": "docker compose up --build -d",
+    "docker:prod:down": "docker compose down -v"
+  },
   "workspaces": [
     "apps/*",
+    "apps/backend/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "mongoose": "^9.1.4"
+  }
 }
