@@ -1,68 +1,64 @@
-FROM oven/bun:1.1.38-alpine AS base
+# Use Bun as base image
+FROM oven/bun:1 AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
-# Copy workspace configuration
+# Copy package files
 COPY package.json bun.lock ./
-COPY packages/common/package.json ./packages/common/
-COPY packages/ui/package.json ./packages/ui/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY apps/frontend/package.json ./apps/frontend/
 
-# Install dependencies
-RUN bun install
+# Install dependencies with frozen lockfile
+RUN bun install --frozen-lockfile
 
-# Build stage
+# Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 
-# Build-time environment variables for Next.js
-ARG NEXT_PUBLIC_API_URL=http://localhost:3000
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
-# Copy node_modules from deps
+# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-# Copy source files
-COPY packages/common ./packages/common
-COPY packages/ui ./packages/ui
-COPY packages/typescript-config ./packages/typescript-config
-COPY packages/eslint-config ./packages/eslint-config
-COPY apps/frontend ./apps/frontend
-
-# Set working directory to frontend
-WORKDIR /app/apps/frontend
+# Set environment variables for build
+# Add your build-time environment variables here
+# ENV NEXT_PUBLIC_API_URL=https://your-api.com
+# ENV NEXT_PUBLIC_AGENT_URL=https://your-agent.com
 
 # Build the Next.js application
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
 RUN bun run build
 
-# Production stage
+# Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
 
+# Set NODE_ENV to production
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create a non-root user (Debian syntax)
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 --gid nodejs nextjs
+
+# Copy necessary files from builder
+COPY --from=builder /app/public ./public
+
+# Set correct permissions for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Switch to non-root user
 USER nextjs
 
-# Copy the standalone build output
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static ./apps/frontend/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/public ./apps/frontend/public
+# Expose port
+EXPOSE 5000
 
-WORKDIR /app/apps/frontend
-
-EXPOSE 3000
-
-ENV PORT=3000
+# Set port environment variable
+ENV PORT=5000
 ENV HOSTNAME="0.0.0.0"
 
+# Start the application
 CMD ["bun", "server.js"]
+
