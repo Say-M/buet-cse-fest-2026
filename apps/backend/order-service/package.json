@@ -12,6 +12,7 @@
   "dependencies": {
     "@hono/prometheus": "^1.0.2",
     "@hono/standard-validator": "^0.2.2",
+    "@repo/backup": "*",
     "@repo/common": "*",
     "@repo/rabbitmq": "*",
     "@repo/telemetry": "*",
