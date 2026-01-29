@@ -10,7 +10,6 @@ import { openAPIRouteHandler } from "hono-openapi";
 import { describeRoute, resolver } from "hono-openapi";
 import { PinoLogger, pinoLogger } from "hono-pino";
 import { pino } from "pino";
-import { PinoPretty } from "pino-pretty";
 import { requestId } from "hono/request-id";
 import { rateLimiter } from "hono-rate-limiter";
 import { prometheus } from "@hono/prometheus";
@@ -57,16 +56,32 @@ app.get("/metrics", printMetrics);
 // Request ID
 app.use(requestId());
 
-// Logging
-app.use(
-  pinoLogger({
-    pino: pino(
-      process.env.NODE_ENV === "production"
-        ? { level: process.env.LOG_LEVEL || "info" }
-        : PinoPretty(),
-    ),
-  }),
-);
+// Logging with Loki transport
+const lokiUrl = process.env.LOKI_URL || "http://localhost:3100";
+const logger = pino({
+  level: process.env.LOG_LEVEL || "info",
+  transport: {
+    targets: [
+      {
+        target: "pino-pretty",
+        level: process.env.LOG_LEVEL || "info",
+        options: { colorize: true },
+      },
+      {
+        target: "pino-loki",
+        level: process.env.LOG_LEVEL || "info",
+        options: {
+          batching: true,
+          interval: 5,
+          host: lokiUrl,
+          labels: { job: "gateway", app: "valerix" },
+        },
+      },
+    ],
+  },
+});
+
+app.use(pinoLogger({ pino: logger }));
 
 // Security headers
 app.use(secureHeaders());
