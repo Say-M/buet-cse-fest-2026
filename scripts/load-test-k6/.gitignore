@@ -1,0 +1,8 @@
+# K6 Test Artifacts
+artifacts/
+*.json
+*.txt
+
+# Keep directory structure
+!.gitignore
+!README.md

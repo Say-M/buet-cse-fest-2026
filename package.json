@@ -23,7 +23,12 @@
     "docker:dev:up": "docker compose -f docker-compose.dev.yml up --build",
     "docker:dev:down": "docker compose -f docker-compose.dev.yml down -v",
     "docker:prod:up": "docker compose up --build -d",
-    "docker:prod:down": "docker compose down -v"
+    "docker:prod:down": "docker compose down -v",
+    "test:load": "bash scripts/run-load-test.sh resilience",
+    "test:load:baseline": "bash scripts/run-load-test.sh baseline",
+    "test:load:stress": "bash scripts/run-load-test.sh stress",
+    "test:load:spike": "bash scripts/run-load-test.sh spike",
+    "system:start": "bash scripts/start-system.sh"
   },
   "workspaces": [
     "apps/*",
