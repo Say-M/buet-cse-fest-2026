@@ -18,12 +18,12 @@ bun run dev
 ## Services
 
 - **gateway** - API gateway (port 3000)
-- **auth-service** - Authentication
-- **order-service** - Order management
-- **inventory-service** - Stock management
-- **payment-service** - Payment processing
-- **notification-service** - Email/SMS
-- **analytics-service** - Metrics
+- **auth-service** - Authentication (port 9000)
+- **order-service** - Order management (port 3001)
+- **inventory-service** - Stock management (port 3002)
+- **payment-service** - Payment processing (port 3004)
+- **notification-service** - Email/SMS (port 3006)
+- **analytics-service** - Metrics (port 3005)
 
 ## Commands
 

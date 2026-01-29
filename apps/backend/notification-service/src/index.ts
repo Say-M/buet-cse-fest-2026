@@ -14,7 +14,7 @@ app.get("/notifications/stats", (c) => {
   });
 });
 
-const port = process.env.PORT || 3003;
+const port = process.env.PORT || 3006;
 
 // Start RabbitMQ consumer
 startOrderConsumer().catch((error) => {
