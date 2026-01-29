@@ -39,7 +39,7 @@ done' && echo " ✓"
 # 4. Start application services
 echo ""
 echo "Starting application services..."
-docker compose -f docker-compose.dev.yml up -d gateway order-service inventory-service auth-service
+docker compose -f docker-compose.dev.yml up -d gateway order-service inventory-service auth-service notification-service payment-service analytics-service
 
 # 5. Wait for services to be ready
 echo ""
@@ -72,6 +72,9 @@ check_health "Gateway" "http://localhost:3000/health"
 check_health "Order Service" "http://localhost:3001/health/live"
 check_health "Inventory Service" "http://localhost:3002/health/live"
 check_health "Auth Service" "http://localhost:9000/health/live"
+check_health "Notification Service" "http://localhost:3003/health/live"
+check_health "Payment Service" "http://localhost:3004/health/live"
+check_health "Analytics Service" "http://localhost:3005/health/live"
 
 # 6. Seed inventory data
 echo ""
@@ -107,10 +110,13 @@ echo "SYSTEM READY FOR LOAD TESTING"
 echo "========================================="
 echo ""
 echo "Service URLs:"
-echo "  Gateway:      http://localhost:3000"
-echo "  Order API:    http://localhost:3001"
-echo "  Inventory:    http://localhost:3002"
-echo "  Auth:         http://localhost:9000"
+echo "  Gateway:         http://localhost:3000"
+echo "  Order API:       http://localhost:3001"
+echo "  Inventory:       http://localhost:3002"
+echo "  Auth:            http://localhost:9000"
+echo "  Notifications:   http://localhost:3003"
+echo "  Payments:        http://localhost:3004"
+echo "  Analytics:       http://localhost:3005"
 echo ""
 echo "Observability:"
 echo "  Prometheus:   http://localhost:9090"
