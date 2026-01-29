@@ -14,7 +14,7 @@ COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY apps/backend/order-service/package.json ./apps/backend/order-service/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Build stage
 FROM base AS builder
