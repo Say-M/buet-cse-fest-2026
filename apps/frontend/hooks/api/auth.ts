@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useApi from "../use-api";
 import { LoginSchemaType, RegisterSchemaType } from "@/schemas/auth";
 import { toast } from "sonner";
@@ -77,6 +77,34 @@ export const useGetProfile = () => {
     queryFn: async () => {
       const { data } = await api.get("/auth/profile");
       return data;
+    },
+  });
+};
+
+export interface UpdateProfilePayload {
+  name?: string;
+  email?: string;
+}
+
+export const useUpdateProfile = () => {
+  const api = useApi();
+  const { setUser } = useContext(AuthContext);
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (payload: UpdateProfilePayload) => {
+      const { data } = await api.patch("/auth/profile", payload);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Profile updated successfully");
+      if (data.data?.user) {
+        setUser(data.data.user);
+      }
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (error: AxiosError<{ message: string }>) => {
+      toast.error(error.response?.data?.message || "Failed to update profile");
     },
   });
 };

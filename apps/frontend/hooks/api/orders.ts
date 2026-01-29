@@ -7,6 +7,7 @@ import { AxiosError } from "axios";
 export interface OrderItem {
   productId: string;
   quantity: number;
+  unitPrice: number;
 }
 
 export interface Order {

@@ -9,6 +9,7 @@ COPY package.json bun.lock ./
 COPY packages/rabbitmq/package.json ./packages/rabbitmq/
 COPY packages/telemetry/package.json ./packages/telemetry/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY apps/backend/analytics-service/package.json ./apps/backend/analytics-service/
 
 # Install dependencies
@@ -24,6 +25,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY packages/rabbitmq ./packages/rabbitmq
 COPY packages/telemetry ./packages/telemetry
 COPY packages/typescript-config ./packages/typescript-config
+COPY packages/eslint-config ./packages/eslint-config
 COPY apps/backend/analytics-service ./apps/backend/analytics-service
 
 # Production stage
