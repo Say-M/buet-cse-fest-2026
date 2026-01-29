@@ -111,7 +111,7 @@ export default function CartPage() {
                       </Button>
                     </div>
                   </div>
-                  {i !== items?.length -1 && <Separator className="mt-4" />}
+                  {i !== items?.length - 1 && <Separator className="mt-4" />}
                 </div>
               ))}
             </CardContent>

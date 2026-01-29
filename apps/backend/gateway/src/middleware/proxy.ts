@@ -121,8 +121,7 @@ export function createProxyMiddleware(config: ProxyConfig) {
       const response = await fetch(fullUrl, fetchOptions);
 
       const status = response.status;
-      console.log({status});
-      
+      console.log({ status });
 
       // Build response headers (preserve multi-value Set-Cookie)
       const outgoingHeaders = new Headers();
@@ -144,7 +143,8 @@ export function createProxyMiddleware(config: ProxyConfig) {
         | undefined;
       const setCookies = getSetCookie?.() ?? [];
       if (setCookies.length > 0) {
-        for (const cookie of setCookies) outgoingHeaders.append("set-cookie", cookie);
+        for (const cookie of setCookies)
+          outgoingHeaders.append("set-cookie", cookie);
       } else {
         const single = response.headers.get("set-cookie");
         if (single) {
@@ -153,7 +153,8 @@ export function createProxyMiddleware(config: ProxyConfig) {
           if (cookies.length <= 1) {
             outgoingHeaders.append("set-cookie", single);
           } else {
-            for (const cookie of cookies) outgoingHeaders.append("set-cookie", cookie);
+            for (const cookie of cookies)
+              outgoingHeaders.append("set-cookie", cookie);
           }
         }
       }
@@ -166,7 +167,10 @@ export function createProxyMiddleware(config: ProxyConfig) {
 
       // Return the proxied response
       const body = await response.text();
-      return new Response(body, { status: response.status, headers: outgoingHeaders });
+      return new Response(body, {
+        status: response.status,
+        headers: outgoingHeaders,
+      });
     } catch (error) {
       const elapsed = Date.now() - startTime;
 

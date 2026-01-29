@@ -12,6 +12,7 @@ export const inventoryResponseSchema = z.object({
   quantity: z.number().int(),
   reservedQuantity: z.number().int(),
   availableQuantity: z.number().int(),
+  price: z.number().nonnegative(),
   updatedAt: z.string().datetime(),
 });
 
@@ -33,6 +34,7 @@ export const createInventorySchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
   productName: z.string().min(1, "Product name is required"),
   quantity: z.number().int().nonnegative("Quantity must be non-negative"),
+  price: z.number().nonnegative("Price must be non-negative"),
 });
 
 export const updateInventorySchema = z.object({
@@ -42,6 +44,7 @@ export const updateInventorySchema = z.object({
     .nonnegative("Quantity must be non-negative")
     .optional(),
   productName: z.string().min(1).optional(),
+  price: z.number().nonnegative("Price must be non-negative").optional(),
 });
 
 export const healthResponseSchema = z.object({

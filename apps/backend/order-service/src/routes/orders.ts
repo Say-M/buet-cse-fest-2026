@@ -117,6 +117,10 @@ ordersRoutes.get(
     return c.json({
       orderId: order.orderId,
       customerId: order.customerId,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      shippingAddress: order.shippingAddress,
+      paymentMethod: order.paymentMethod,
       items: order.items,
       totalAmount: order.totalAmount,
       status: order.status,
@@ -154,6 +158,10 @@ ordersRoutes.get(
       orders.map((order) => ({
         orderId: order.orderId,
         customerId: order.customerId,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail,
+        shippingAddress: order.shippingAddress,
+        paymentMethod: order.paymentMethod,
         items: order.items,
         totalAmount: order.totalAmount,
         status: order.status,

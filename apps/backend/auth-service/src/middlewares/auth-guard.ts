@@ -24,8 +24,7 @@ export const roleGuard = ({ allowedRoles }: { allowedRoles: Role[] | -1 }) => {
           401,
         );
 
-      user = await User.findById(decoded.userId).select("-hashedPassword"); 
-      
+      user = await User.findById(decoded.userId).select("-hashedPassword");
 
       if (!user)
         return c.json(
@@ -41,7 +40,6 @@ export const roleGuard = ({ allowedRoles }: { allowedRoles: Role[] | -1 }) => {
         c.set("user", user);
         return await next();
       }
-
 
       if (allowedRoles && !allowedRoles.includes(user.role))
         return c.json(

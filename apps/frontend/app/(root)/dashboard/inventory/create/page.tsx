@@ -14,41 +14,46 @@ import {
 } from "@/components/ui/card";
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
-import { inventorySchema, type InventorySchemaType } from "@/schemas/inventory";
+import {
+  createInventoryBackendSchema,
+  type CreateInventoryBackendSchemaType,
+} from "@/schemas/inventory";
+import { useCreateInventory } from "@/hooks/api/inventory";
 
 export default function CreateInventoryPage() {
   const router = useRouter();
-  const form = useForm<InventorySchemaType>({
-    resolver: zodResolver(inventorySchema),
+  const createInventory = useCreateInventory();
+
+  const form = useForm<CreateInventoryBackendSchemaType>({
+    resolver: zodResolver(createInventoryBackendSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      category: "",
+      productId: "",
+      productName: "",
       quantity: 0,
       price: 0,
-      sku: "",
     },
   });
 
-  function onSubmit(data: InventorySchemaType) {
-    console.log("Creating inventory item:", data);
-    setTimeout(() => {
-      router.push("/dashboard/inventory");
-    }, 500);
+  async function onSubmit(data: CreateInventoryBackendSchemaType) {
+    await createInventory.mutateAsync(data, {
+      onSuccess: () => {
+        router.push("/dashboard/inventory");
+      },
+    });
   }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/inventory">
+          <Link href="/inventory">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
@@ -64,21 +69,41 @@ export default function CreateInventoryPage() {
         <CardHeader>
           <CardTitle>Item Details</CardTitle>
           <CardDescription>
-            Enter the details for the new inventory item
+            Enter the details for the new inventory item (backend inventory
+            model)
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
               <Controller
-                name="name"
+                name="productId"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="name">Name</FieldLabel>
+                    <FieldLabel htmlFor="productId">Product ID</FieldLabel>
                     <Input
                       {...field}
-                      id="name"
+                      id="productId"
+                      placeholder="e.g., SKU-001"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="productName"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="productName">Product Name</FieldLabel>
+                    <Input
+                      {...field}
+                      id="productName"
                       placeholder="e.g., Laptop Pro 15"
                       aria-invalid={fieldState.invalid}
                     />
@@ -88,66 +113,6 @@ export default function CreateInventoryPage() {
                   </Field>
                 )}
               />
-
-              <Controller
-                name="description"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="description">Description</FieldLabel>
-                    <Textarea
-                      {...field}
-                      id="description"
-                      placeholder="Enter a detailed description of the item"
-                      aria-invalid={fieldState.invalid}
-                      rows={4}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <Controller
-                  name="category"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="category">Category</FieldLabel>
-                      <Input
-                        {...field}
-                        id="category"
-                        placeholder="e.g., Electronics"
-                        aria-invalid={fieldState.invalid}
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-
-                <Controller
-                  name="sku"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="sku">SKU</FieldLabel>
-                      <Input
-                        {...field}
-                        id="sku"
-                        placeholder="e.g., LAP-PRO-15-001"
-                        aria-invalid={fieldState.invalid}
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Controller
@@ -196,9 +161,11 @@ export default function CreateInventoryPage() {
 
               <Field>
                 <div className="flex gap-2">
-                  <Button type="submit">Create Item</Button>
+                  <Button type="submit" disabled={createInventory.isPending}>
+                    {createInventory.isPending ? "Creating..." : "Create Item"}
+                  </Button>
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/dashboard/inventory">Cancel</Link>
+                    <Link href="/inventory">Cancel</Link>
                   </Button>
                 </div>
               </Field>

@@ -21,6 +21,7 @@ interface InventoryItem {
   quantity: number;
   reservedQuantity: number;
   availableQuantity: number;
+  price: number;
 }
 
 export interface InventoryCheckResult {

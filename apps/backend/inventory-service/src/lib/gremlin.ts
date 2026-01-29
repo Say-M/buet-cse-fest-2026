@@ -183,7 +183,9 @@ export function maybeSchrodingerCrash(
   }
 
   // Deterministic based on request ID
-  const hash = createHash("sha256").update(requestId + "-schrodinger").digest();
+  const hash = createHash("sha256")
+    .update(requestId + "-schrodinger")
+    .digest();
   const hashValue = hash.readUInt32BE(0);
   const normalizedValue = hashValue / 0xffffffff; // 0.0 to 1.0
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardAction,
 } from "@/components/ui/card";
 import {
   Table,
@@ -20,16 +20,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
-import {
-  mockInventory,
-  formatCurrency,
-  formatDate,
-  getStatusColor,
-  type InventoryItem,
-} from "@/lib/mock-data";
+import { formatDate, formatCurrency } from "@/lib/mock-data";
+import { useGetAllInventory, type InventoryItem } from "@/hooks/api/inventory";
 
 export default function InventoryPage() {
-  const [inventory] = useState<InventoryItem[]>(mockInventory);
+  const { data: inventory, isLoading, isError } = useGetAllInventory();
+
+  const items: InventoryItem[] = inventory ?? [];
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
@@ -52,24 +49,42 @@ export default function InventoryPage() {
         <CardHeader>
           <CardTitle>Inventory Items</CardTitle>
           <CardDescription>
-            A list of all inventory items in your system
+            A list of all inventory items in your system from the live backend
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Quantity</TableHead>
+                <TableHead>Product ID</TableHead>
+                <TableHead>Product Name</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Reserved</TableHead>
+                <TableHead>Available</TableHead>
                 <TableHead>Last Updated</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inventory.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-muted-foreground"
+                  >
+                    Loading inventory...
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-destructive"
+                  >
+                    Failed to load inventory. Please try again.
+                  </TableCell>
+                </TableRow>
+              ) : items.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -79,22 +94,20 @@ export default function InventoryPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                inventory.map((item) => (
-                  <TableRow key={item.id}>
+                items.map((item) => (
+                  <TableRow key={item.productId}>
                     <TableCell className="font-mono text-sm">
-                      {item.sku}
+                      {item.productId}
                     </TableCell>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productName}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(item.price)}
+                    </TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{formatCurrency(item.price)}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusColor(item.status) as any}>
-                        {item.status
-                          .replace("_", " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{item.reservedQuantity}</TableCell>
+                    <TableCell>{item.availableQuantity}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDate(item.updatedAt)}
                     </TableCell>

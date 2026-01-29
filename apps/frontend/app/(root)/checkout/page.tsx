@@ -26,17 +26,22 @@ import { useNotifications } from "@/contexts/notifications.context";
 import { formatCurrency } from "@/lib/mock-data";
 import { orderCreateSchema, type OrderCreateSchemaType } from "@/schemas/order";
 import { ArrowLeft } from "lucide-react";
+import { useContext } from "react";
+import { AuthContext } from "@/contexts/auth.context";
+import { useCreateOrder } from "@/hooks/api/orders";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotalPrice, clearCart } = useCart();
   const { addNotification } = useNotifications();
+  const { user } = useContext(AuthContext);
+  const createOrder = useCreateOrder();
 
   const form = useForm<OrderCreateSchemaType>({
     resolver: zodResolver(orderCreateSchema),
     defaultValues: {
-      customerName: "",
-      customerEmail: "",
+      customerName: user?.name ?? "",
+      customerEmail: user?.email ?? "",
       shippingAddress: "",
       paymentMethod: "credit_card",
       items: items.map((item) => ({
@@ -62,17 +67,49 @@ export default function CheckoutPage() {
     );
   }
 
-  function onSubmit(data: OrderCreateSchemaType) {
-    console.log("Order placed:", data);
-    addNotification({
-      title: "Order Placed",
-      message: `Your order has been placed successfully. Order total: ${formatCurrency(getTotalPrice())}`,
-      type: "success",
-    });
-    clearCart();
-    setTimeout(() => {
+  async function onSubmit(data: OrderCreateSchemaType) {
+    if (!user?._id) {
+      addNotification({
+        title: "Authentication required",
+        message: "Please log in before placing an order.",
+        type: "error",
+      });
+      router.push("/auth/login");
+      return;
+    }
+
+    try {
+      const idempotencyKey = crypto.randomUUID();
+      await createOrder.mutateAsync({
+        customerId: user._id,
+        customerName: data.customerName,
+        customerEmail: data.customerEmail,
+        shippingAddress: data.shippingAddress,
+        paymentMethod: data.paymentMethod,
+        items: items.map((item) => ({
+          productId: item.id,
+          quantity: item.cartQuantity,
+          // price is intentionally omitted; backend derives it from inventory
+        })),
+        idempotencyKey,
+      });
+
+      addNotification({
+        title: "Order Placed",
+        message: `Your order has been placed successfully. Order total: ${formatCurrency(
+          getTotalPrice(),
+        )}`,
+        type: "success",
+      });
+      clearCart();
       router.push("/profile");
-    }, 1000);
+    } catch (error) {
+      addNotification({
+        title: "Order Failed",
+        message: "Failed to place your order. Please try again.",
+        type: "error",
+      });
+    }
   }
 
   return (
@@ -187,8 +224,13 @@ export default function CheckoutPage() {
                   />
 
                   <Field>
-                    <Button type="submit" className="w-full" size="lg">
-                      Place Order
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      size="lg"
+                      disabled={createOrder.isPending}
+                    >
+                      {createOrder.isPending ? "Placing Order..." : "Place Order"}
                     </Button>
                   </Field>
                 </FieldGroup>

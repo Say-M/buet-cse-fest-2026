@@ -11,7 +11,11 @@ export const orderItemSchema = z.object({
 export const createOrderSchema = z.object({
   customerId: z.string().min(1, "Customer ID is required"),
   items: z.array(orderItemSchema).min(1, "At least one item is required"),
-  idempotencyKey: z.string().uuid().optional(),
+  idempotencyKey: z.uuid().optional(),
+  customerName: z.string().min(1).optional(),
+  customerEmail: z.string().email().optional(),
+  shippingAddress: z.string().min(1).optional(),
+  paymentMethod: z.string().min(1).optional(),
 });
 
 export const orderIdParamSchema = z.object({
@@ -37,6 +41,10 @@ export const inventoryStatusEnum = z.enum([
 export const orderResponseSchema = z.object({
   orderId: z.string(),
   customerId: z.string(),
+  customerName: z.string().optional(),
+  customerEmail: z.string().optional(),
+  shippingAddress: z.string().optional(),
+  paymentMethod: z.string().optional(),
   items: z.array(
     z.object({
       productId: z.string(),

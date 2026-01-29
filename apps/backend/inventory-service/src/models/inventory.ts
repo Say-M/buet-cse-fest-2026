@@ -7,6 +7,7 @@ export interface IInventory extends Document {
   productName: string;
   quantity: number;
   reservedQuantity: number;
+  price: number;
   updatedAt: Date;
 }
 
@@ -32,6 +33,11 @@ const inventorySchema = new Schema<IInventory>(
       type: Number,
       required: true,
       default: 0,
+      min: 0,
+    },
+    price: {
+      type: Number,
+      required: true,
       min: 0,
     },
   },

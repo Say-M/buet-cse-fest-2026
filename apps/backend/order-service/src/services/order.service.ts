@@ -22,10 +22,13 @@ export interface CreateOrderResult {
 function hashRequest(data: CreateOrderInput): string {
   const normalized = JSON.stringify({
     customerId: data.customerId,
+    customerName: data.customerName,
+    customerEmail: data.customerEmail,
+    shippingAddress: data.shippingAddress,
+    paymentMethod: data.paymentMethod,
     items: data.items.map((item) => ({
       productId: item.productId,
       quantity: item.quantity,
-      price: item.price,
     })),
   });
   return createHash("sha256").update(normalized).digest("hex");
@@ -53,8 +56,7 @@ export class OrderService {
         if (existingKey.requestHash !== requestHash) {
           return {
             success: false,
-            message:
-              "Idempotency key reused with different request parameters",
+            message: "Idempotency key reused with different request parameters",
           };
         }
 
@@ -135,12 +137,17 @@ export class OrderService {
       let order: IOrder | null = null;
 
       await session.withTransaction(async () => {
-        // Calculate total amount (using placeholder prices if not provided)
-        const items: IOrderItem[] = data.items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price || 99.99, // Default price if not provided
-        }));
+        // Calculate item prices from inventory service results (never trust client prices)
+        const items: IOrderItem[] = data.items.map((item, index) => {
+          const check = inventoryChecks[index];
+          const price = check && check.item ? check.item.price : 0;
+
+          return {
+            productId: item.productId,
+            quantity: item.quantity,
+            price,
+          };
+        });
 
         const totalAmount = items.reduce(
           (sum, item) => sum + item.price * item.quantity,
@@ -153,6 +160,10 @@ export class OrderService {
             {
               orderId,
               customerId: data.customerId,
+              customerName: data.customerName,
+              customerEmail: data.customerEmail,
+              shippingAddress: data.shippingAddress,
+              paymentMethod: data.paymentMethod,
               items,
               totalAmount,
               status: "pending",

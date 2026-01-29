@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useApi from "../use-api";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import type { CreateInventorySchemaType } from "@/schemas/inventory";
+import type { CreateInventoryBackendSchemaType } from "@/schemas/inventory";
 
 // Types based on backend responses
 export interface InventoryItem {
@@ -11,6 +11,7 @@ export interface InventoryItem {
   quantity: number;
   reservedQuantity: number;
   availableQuantity: number;
+  price: number;
   updatedAt: string;
 }
 
@@ -55,9 +56,9 @@ export const useGetInventoryByProductId = (productId: string) => {
 export const useCreateInventory = () => {
   const api = useApi();
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (payload: CreateInventorySchemaType) => {
+    mutationFn: async (payload: CreateInventoryBackendSchemaType) => {
       const { data } = await api.post("/inventory", payload);
       return data;
     },
@@ -67,7 +68,7 @@ export const useCreateInventory = () => {
     },
     onError: (error: AxiosError<{ error: string }>) => {
       toast.error(
-        error.response?.data?.error || "Failed to create inventory item"
+        error.response?.data?.error || "Failed to create inventory item",
       );
     },
   });
@@ -88,23 +89,23 @@ export const useReserveStock = () => {
     }) => {
       const { data } = await api.post<ReserveStockResponse>(
         `/inventory/${productId}/reserve`,
-        { quantity }
+        { quantity },
       );
       return data;
     },
     onSuccess: (data, variables) => {
       if (data.success) {
         toast.success(data.message);
-        queryClient.invalidateQueries({ queryKey: ["inventory", variables.productId] });
+        queryClient.invalidateQueries({
+          queryKey: ["inventory", variables.productId],
+        });
         queryClient.invalidateQueries({ queryKey: ["inventory", "all"] });
       } else {
         toast.error(data.message);
       }
     },
     onError: (error: AxiosError<{ message: string }>) => {
-      toast.error(
-        error.response?.data?.message || "Failed to reserve stock"
-      );
+      toast.error(error.response?.data?.message || "Failed to reserve stock");
     },
   });
 };
@@ -124,23 +125,23 @@ export const useReleaseStock = () => {
     }) => {
       const { data } = await api.post<ReserveStockResponse>(
         `/inventory/${productId}/release`,
-        { quantity }
+        { quantity },
       );
       return data;
     },
     onSuccess: (data, variables) => {
       if (data.success) {
         toast.success(data.message);
-        queryClient.invalidateQueries({ queryKey: ["inventory", variables.productId] });
+        queryClient.invalidateQueries({
+          queryKey: ["inventory", variables.productId],
+        });
         queryClient.invalidateQueries({ queryKey: ["inventory", "all"] });
       } else {
         toast.error(data.message);
       }
     },
     onError: (error: AxiosError<{ message: string }>) => {
-      toast.error(
-        error.response?.data?.message || "Failed to release stock"
-      );
+      toast.error(error.response?.data?.message || "Failed to release stock");
     },
   });
 };

@@ -2,13 +2,34 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { mockInventory } from "@/lib/mock-data";
+import { mockInventory, type InventoryItem } from "@/lib/mock-data";
 import { ProductCard } from "@/components/product-card";
+import { useGetAllInventory } from "@/hooks/api/inventory";
 
 export default function Home() {
-  const featuredProducts = mockInventory
-    .filter((item) => item.status === "in_stock")
-    .slice(0, 6);
+  const { data: inventory, isLoading, isError } = useGetAllInventory();
+
+  const featuredProducts: InventoryItem[] =
+    inventory
+      ?.map<InventoryItem>((item) => ({
+        id: item.productId,
+        name: item.productName,
+        description: "No description available.",
+        category: "General",
+        quantity: item.availableQuantity,
+        price: item.price,
+        sku: item.productId,
+        status:
+          item.availableQuantity === 0
+            ? "out_of_stock"
+            : item.availableQuantity <= 5
+              ? "low_stock"
+              : "in_stock",
+        createdAt: item.updatedAt,
+        updatedAt: item.updatedAt,
+      }))
+      ?.filter((p) => p.status === "in_stock")
+      .slice(0, 6) ?? [];
 
   return (
     <div className="container mx-auto px-4 py-12 md:px-6">
@@ -28,17 +49,25 @@ export default function Home() {
       {/* Featured Products */}
       <section>
         <h2 className="mb-8 text-3xl font-bold">Featured Products</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {featuredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              showQuantityBadge={true}
-              showStatusBadge={false}
-              descriptionLines={2}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <p className="text-muted-foreground">Loading featured products...</p>
+        ) : isError ? (
+          <p className="text-destructive">
+            Failed to load products. Please try again.
+          </p>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {featuredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                showQuantityBadge={true}
+                showStatusBadge={false}
+                descriptionLines={2}
+              />
+            ))}
+          </div>
+        )}
         <div className="mt-8 text-center">
           <Button variant="outline" asChild>
             <Link href="/products">View All Products</Link>

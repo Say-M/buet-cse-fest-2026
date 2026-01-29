@@ -7,7 +7,6 @@ import { AxiosError } from "axios";
 export interface OrderItem {
   productId: string;
   quantity: number;
-  unitPrice: number;
 }
 
 export interface Order {
@@ -24,6 +23,10 @@ export interface CreateOrderPayload {
   customerId: string;
   items: OrderItem[];
   idempotencyKey?: string;
+  customerName?: string;
+  customerEmail?: string;
+  shippingAddress?: string;
+  paymentMethod?: string;
 }
 
 export interface CreateOrderResponse {
@@ -101,7 +104,7 @@ export const useShipOrder = () => {
   return useMutation({
     mutationFn: async (orderId: string) => {
       const { data } = await api.post<OrderActionResponse>(
-        `/orders/${orderId}/ship`
+        `/orders/${orderId}/ship`,
       );
       return data;
     },
@@ -128,7 +131,7 @@ export const useCancelOrder = () => {
   return useMutation({
     mutationFn: async (orderId: string) => {
       const { data } = await api.post<OrderActionResponse>(
-        `/orders/${orderId}/cancel`
+        `/orders/${orderId}/cancel`,
       );
       return data;
     },

@@ -41,7 +41,7 @@ export default function AuthProvider({
 
   useEffect(() => {
     if (isFetching) return;
-    
+
     if (pathname.includes("/auth") && user) router.push("/");
     if (pathname.includes("/dashboard") && !user) router.push("/auth/login");
   }, [isFetching, user, pathname]);

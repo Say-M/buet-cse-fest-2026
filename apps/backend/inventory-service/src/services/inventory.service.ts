@@ -4,6 +4,7 @@ import {
   Inventory,
   ProcessedEvent,
   type IInventory,
+  type IProcessedEvent,
 } from "../models/inventory";
 import type {
   CreateInventoryInput,
@@ -34,6 +35,7 @@ export class InventoryService {
       productName: data.productName,
       quantity: data.quantity,
       reservedQuantity: 0,
+      price: data.price,
     });
     return inventory.save();
   }
@@ -274,18 +276,35 @@ export class InventoryService {
    */
   async seedInventory(): Promise<void> {
     const sampleProducts = [
-      { productId: "PROD-001", productName: "Gaming Console", quantity: 100 },
+      {
+        productId: "PROD-001",
+        productName: "Gaming Console",
+        quantity: 100,
+        price: 499.99,
+      },
       {
         productId: "PROD-002",
         productName: "Wireless Controller",
         quantity: 250,
+        price: 59.99,
       },
-      { productId: "PROD-003", productName: "Gaming Headset", quantity: 150 },
-      { productId: "PROD-004", productName: "Gaming Mouse", quantity: 300 },
+      {
+        productId: "PROD-003",
+        productName: "Gaming Headset",
+        quantity: 150,
+        price: 79.99,
+      },
+      {
+        productId: "PROD-004",
+        productName: "Gaming Mouse",
+        quantity: 300,
+        price: 49.99,
+      },
       {
         productId: "PROD-005",
         productName: "Mechanical Keyboard",
         quantity: 200,
+        price: 129.99,
       },
     ];
 

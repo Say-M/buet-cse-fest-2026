@@ -18,6 +18,8 @@ import {
   type InventoryItem,
 } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { useContext } from "react";
+import { AuthContext } from "@/contexts/auth.context";
 
 interface ProductCardProps {
   product: InventoryItem;
@@ -39,6 +41,7 @@ export function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const { addItem } = useCart();
+  const { user } = useContext(AuthContext)
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,58 +71,55 @@ export function ProductCard({
         "flex flex-col cursor-pointer transition-shadow hover:shadow-lg",
         className,
       )}
-      asChild
     >
-      <Link href={`/products/${product.id}`}>
-        <CardHeader>
-          <CardTitle className="line-clamp-1">{product.name}</CardTitle>
-          <CardDescription>{product.category}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-1 flex-col gap-4">
-          <p
-            className={cn(
-              "text-sm text-muted-foreground",
-              descriptionLines === 1 && "line-clamp-1",
-              descriptionLines === 2 && "line-clamp-2",
-              descriptionLines === 3 && "line-clamp-3",
-              descriptionLines === 4 && "line-clamp-4",
-            )}
-          >
-            {product.description}
-          </p>
-          <div className="mt-auto space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">
-                {formatCurrency(product.price)}
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                {showStatusBadge && (
-                  <Badge variant={getStatusBadgeVariant()}>
-                    {getStatusText()}
-                  </Badge>
-                )}
-                {showQuantityBadge && (
-                  <Badge
-                    variant={product.quantity > 10 ? "default" : "secondary"}
-                  >
-                    {product.quantity} in stock
-                  </Badge>
-                )}
-              </div>
+      <CardHeader>
+        <CardTitle className="line-clamp-1">{product.name}</CardTitle>
+        <CardDescription>{product.category}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-4">
+        <p
+          className={cn(
+            "text-sm text-muted-foreground",
+            descriptionLines === 1 && "line-clamp-1",
+            descriptionLines === 2 && "line-clamp-2",
+            descriptionLines === 3 && "line-clamp-3",
+            descriptionLines === 4 && "line-clamp-4",
+          )}
+        >
+          {product.description}
+        </p>
+        <div className="mt-auto space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              {formatCurrency(product.price)}
             </div>
-            {showAddToCart && (
-              <Button
-                onClick={handleAddToCart}
-                disabled={product.quantity === 0}
-                className="w-full"
-              >
-                <ShoppingCart className="mr-2 size-4" />
-                Add to Cart
-              </Button>
-            )}
+            <div className="flex flex-col items-end gap-1">
+              {showStatusBadge && (
+                <Badge variant={getStatusBadgeVariant()}>
+                  {getStatusText()}
+                </Badge>
+              )}
+              {showQuantityBadge && (
+                <Badge
+                  variant={product.quantity > 10 ? "default" : "secondary"}
+                >
+                  {product.quantity} in stock
+                </Badge>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Link>
+          {user && showAddToCart && (
+            <Button
+              onClick={handleAddToCart}
+              disabled={product.quantity === 0}
+              className="w-full"
+            >
+              <ShoppingCart className="mr-2 size-4" />
+              Add to Cart
+            </Button>
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 }

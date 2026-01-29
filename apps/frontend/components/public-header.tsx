@@ -26,7 +26,7 @@ export function PublicHeader() {
   const { user } = useContext(AuthContext);
   const isMobile = useIsMobile();
   const cartItemsCount = getTotalItems();
-  const {mutate: logoutMutation, isPending: isLoggingOut} = useLogout();
+  const { mutate: logoutMutation, isPending: isLoggingOut } = useLogout();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -54,21 +54,25 @@ export function PublicHeader() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/cart" className="relative">
-              <ShoppingCart className="size-5" />
-              {cartItemsCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
-                >
-                  {cartItemsCount}
-                </Badge>
-              )}
-            </Link>
-          </Button>
+          {user && (
+            <>
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/cart" className="relative">
+                  <ShoppingCart className="size-5" />
+                  {cartItemsCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
+                    >
+                      {cartItemsCount}
+                    </Badge>
+                  )}
+                </Link>
+              </Button>
 
-          {user && <NotificationsDropdown />}
+              <NotificationsDropdown />
+            </>
+          )}
 
           {user ? (
             <DropdownMenu>
@@ -87,7 +91,12 @@ export function PublicHeader() {
                   <Link href="/dashboard">Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logoutMutation()} disabled={isLoggingOut}>Logout{ isLoggingOut && <Spinner /> }</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => logoutMutation()}
+                  disabled={isLoggingOut}
+                >
+                  Logout{isLoggingOut && <Spinner />}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

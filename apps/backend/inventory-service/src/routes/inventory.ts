@@ -50,6 +50,7 @@ inventoryRoutes.get(
         quantity: item.quantity,
         reservedQuantity: item.reservedQuantity,
         availableQuantity: item.quantity - item.reservedQuantity,
+        price: item.price,
         updatedAt: item.updatedAt.toISOString(),
       })),
     );
@@ -78,8 +79,7 @@ inventoryRoutes.get(
   async (c) => {
     // Apply deterministic gremlin latency based on request ID
     const requestId = c.get("requestId") as string;
-    const delayApplied =
-      await maybeApplyGremlinLatencyDeterministic(requestId);
+    const delayApplied = await maybeApplyGremlinLatencyDeterministic(requestId);
     if (delayApplied > 0) {
       c.header("X-Gremlin-Delay-Ms", delayApplied.toString());
     }
@@ -97,6 +97,7 @@ inventoryRoutes.get(
       quantity: item.quantity,
       reservedQuantity: item.reservedQuantity,
       availableQuantity: item.quantity - item.reservedQuantity,
+      price: item.price,
       updatedAt: item.updatedAt.toISOString(),
     });
   },
@@ -131,8 +132,7 @@ inventoryRoutes.post(
     const requestId = c.get("requestId") as string;
 
     // Apply deterministic gremlin latency based on request ID
-    const delayApplied =
-      await maybeApplyGremlinLatencyDeterministic(requestId);
+    const delayApplied = await maybeApplyGremlinLatencyDeterministic(requestId);
     if (delayApplied > 0) {
       c.header("X-Gremlin-Delay-Ms", delayApplied.toString());
     }
@@ -311,6 +311,7 @@ inventoryRoutes.post(
         quantity: item.quantity,
         reservedQuantity: item.reservedQuantity,
         availableQuantity: item.quantity - item.reservedQuantity,
+        price: item.price,
         updatedAt: item.updatedAt.toISOString(),
       },
       201,

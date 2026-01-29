@@ -3,18 +3,38 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockInventory } from "@/lib/mock-data";
+import { type InventoryItem } from "@/lib/mock-data";
 import { ProductCard } from "@/components/product-card";
 import { Search } from "lucide-react";
+import { useGetAllInventory } from "@/hooks/api/inventory";
 
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = Array.from(
-    new Set(mockInventory.map((item) => item.category)),
-  );
-  const availableProducts = mockInventory.filter(
+  const { data: inventory, isLoading, isError } = useGetAllInventory();
+
+  const products: InventoryItem[] =
+    inventory?.map<InventoryItem>((item) => ({
+      id: item.productId,
+      name: item.productName,
+      description: "No description available.",
+      category: "General",
+      quantity: item.availableQuantity,
+      price: item.price,
+      sku: item.productId,
+      status:
+        item.availableQuantity === 0
+          ? "out_of_stock"
+          : item.availableQuantity <= 5
+            ? "low_stock"
+            : "in_stock",
+      createdAt: item.updatedAt,
+      updatedAt: item.updatedAt,
+    })) ?? [];
+
+  const categories = Array.from(new Set(products.map((item) => item.category)));
+  const availableProducts = products.filter(
     (item) => item.status !== "out_of_stock",
   );
 
@@ -61,7 +81,17 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {filteredProducts.length === 0 ? (
+      {isLoading ? (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">Loading products...</p>
+        </div>
+      ) : isError ? (
+        <div className="py-12 text-center">
+          <p className="text-destructive">
+            Failed to load products. Please try again.
+          </p>
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-muted-foreground">No products found.</p>
         </div>

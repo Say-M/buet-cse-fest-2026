@@ -11,6 +11,10 @@ export interface IOrderItem {
 export interface IOrder extends Document {
   orderId: string;
   customerId: string;
+  customerName?: string;
+  customerEmail?: string;
+  shippingAddress?: string;
+  paymentMethod?: string;
   items: IOrderItem[];
   totalAmount: number;
   status: "pending" | "confirmed" | "shipped" | "failed" | "cancelled";
@@ -53,6 +57,18 @@ const orderSchema = new Schema<IOrder>(
       type: Number,
       required: true,
       min: 0,
+    },
+    customerName: {
+      type: String,
+    },
+    customerEmail: {
+      type: String,
+    },
+    shippingAddress: {
+      type: String,
+    },
+    paymentMethod: {
+      type: String,
     },
     status: {
       type: String,
