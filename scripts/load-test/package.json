@@ -1,0 +1,14 @@
+{
+  "name": "load-test",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun run index.ts",
+    "test:quick": "bun run index.ts --requests=20 --concurrency=5",
+    "test:full": "bun run index.ts --requests=100 --concurrency=10"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
