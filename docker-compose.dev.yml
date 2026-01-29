@@ -1,6 +1,23 @@
 # @format
 
 services:
+  # ============ FRONTEND ============
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:3000
+    ports:
+      - "5000:3000"
+    depends_on:
+      - gateway
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped
+
   # ============ APPLICATION SERVICES ============
   gateway:
     build:
