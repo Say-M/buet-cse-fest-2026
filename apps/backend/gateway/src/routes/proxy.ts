@@ -1,5 +1,3 @@
-/** @format */
-
 import { Hono } from "hono";
 import { createProxyMiddleware } from "../middleware/proxy";
 

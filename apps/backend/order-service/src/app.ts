@@ -1,5 +1,3 @@
-/** @format */
-
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { ZodError } from "zod";

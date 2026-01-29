@@ -1,6 +1,5 @@
 /**
  * Unit tests for exponential backoff and jitter
- * @format
  */
 
 import { describe, expect, test } from "bun:test";

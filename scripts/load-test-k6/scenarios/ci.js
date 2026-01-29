@@ -1,7 +1,6 @@
 /**
  * Ultra-simple K6 CI Test
  * Just health checks - that's it!
- * @format
  */
 
 import http from 'k6/http';

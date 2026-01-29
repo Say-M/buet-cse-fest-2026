@@ -1,5 +1,3 @@
-/** @format */
-
 import { Hono } from "hono";
 import { analyticsService } from "../services/analytics.service";
 

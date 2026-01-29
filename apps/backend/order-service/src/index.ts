@@ -1,5 +1,3 @@
-/** @format */
-
 // Initialize telemetry FIRST - before any other imports
 import { initTelemetry } from "@repo/telemetry";
 initTelemetry({

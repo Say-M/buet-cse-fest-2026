@@ -1,6 +1,5 @@
 #!/bin/bash
 # Production-grade system startup with health checks
-# @format
 
 set -e  # Exit on error
 

@@ -1,5 +1,3 @@
-/** @format */
-
 class AnalyticsService {
   private metrics = {
     totalOrders: 0,

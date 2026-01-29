@@ -1,13 +1,8 @@
-To install dependencies:
+# Auth Service
 
-```sh
+```bash
 bun install
-```
-
-To run:
-
-```sh
 bun run dev
 ```
 
-open http://localhost:3000
+Runs on http://localhost:3001

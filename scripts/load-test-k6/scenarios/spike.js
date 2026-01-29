@@ -4,7 +4,6 @@
  * Sudden traffic spike to test auto-scaling and circuit breaker.
  * Simulates flash sale or viral event.
  * 
- * @format
  */
 
 import http from 'k6/http';

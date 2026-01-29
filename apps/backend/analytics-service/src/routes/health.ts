@@ -1,5 +1,3 @@
-/** @format */
-
 import { Hono } from "hono";
 
 const health = new Hono();

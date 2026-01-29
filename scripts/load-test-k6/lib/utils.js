@@ -1,7 +1,6 @@
 /**
  * K6 Load Test Utilities
  * Helper functions for test scenarios
- * @format
  */
 
 import { randomProduct, randomQuantity, randomPrice, generateCustomerId } from './config.js';

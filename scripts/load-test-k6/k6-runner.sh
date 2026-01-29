@@ -1,6 +1,5 @@
 #!/bin/bash
 # K6 Test Runner with Artifact Collection
-# @format
 
 set -e
 

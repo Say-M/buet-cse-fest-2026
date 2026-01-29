@@ -1,7 +1,6 @@
 /**
  * K6 Artifact Collection Module
  * Handles collection and export of affected orders and test metrics
- * @format
  */
 
 import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.2/index.js';

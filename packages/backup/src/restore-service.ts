@@ -1,5 +1,3 @@
-/** @format */
-
 import mongoose from "mongoose";
 import { createHash } from "crypto";
 import { Snapshot, type ISnapshot } from "./models/snapshot";

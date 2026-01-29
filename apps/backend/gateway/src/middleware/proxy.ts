@@ -1,5 +1,3 @@
-/** @format */
-
 import type { Context, Next } from "hono";
 
 interface ProxyConfig {

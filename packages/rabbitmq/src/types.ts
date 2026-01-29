@@ -1,5 +1,3 @@
-/** @format */
-
 import type { Channel, Connection, ConsumeMessage } from "amqplib";
 
 export interface RabbitMQConfig {

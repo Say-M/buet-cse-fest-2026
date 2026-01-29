@@ -4,7 +4,6 @@
  * Gradually increases load to find system breaking point.
  * Monitors degradation as load increases.
  * 
- * @format
  */
 
 import http from 'k6/http';

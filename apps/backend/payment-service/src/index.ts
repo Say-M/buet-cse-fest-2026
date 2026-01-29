@@ -1,5 +1,3 @@
-/** @format */
-
 import app, { stats } from "./app";
 import healthRoutes from "./routes/health";
 import paymentRoutes from "./routes/payment";

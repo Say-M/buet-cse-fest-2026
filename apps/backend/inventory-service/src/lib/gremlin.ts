@@ -4,7 +4,6 @@
  * Introduces deterministic delays to simulate real-world network issues.
  * Used to test resilience patterns like circuit breakers and timeouts.
  *
- * @format
  */
 
 import { createHash } from "crypto";

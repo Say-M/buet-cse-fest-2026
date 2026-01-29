@@ -4,7 +4,6 @@
  * Used by the outbox worker to retry publishing to RabbitMQ when the broker is unavailable.
  * Prevents thundering herd problem with jitter.
  *
- * @format
  */
 
 export interface BackoffConfig {
